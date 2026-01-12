@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Clicker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --accent-color: #00ff88;
+            --accent-glow: rgba(0, 255, 136, 0.4);
+            --text-main: #ffffff;
+            --text-dim: #888888;
+            --font-main: 'Outfit', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            /* Prevent selection while clicking */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Ambient Background Glow */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            left: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 60%);
+            opacity: 0.1;
+            z-index: -1;
+            filter: blur(80px);
+        }
+
+        .game-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            width: 100%;
+            max-width: 1000px;
+            height: 80vh;
+            gap: 2rem;
+            padding: 1rem;
+        }
+
+        /* Left Side: Clicker */
+        .click-zone {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .score-container {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .score-label {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+        }
+
+        .score-value {
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--text-main);
+            text-shadow: 0 0 20px var(--accent-glow);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .currency {
+            color: var(--accent-color);
+        }
+
+        .gps-display {
+            margin-top: 0.5rem;
+            color: var(--text-dim);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .coin-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+            z-index: 10;
+        }
+
+        .coin-btn:active {
+            transform: scale(0.92);
+        }
+
+        .coin-btn:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 30px var(--accent-glow));
+        }
+
+        .coin-svg {
+            width: 250px;
+            height: 250px;
+            fill: var(--accent-color);
+            filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+        }
+
+        /* Right Side: Shop */
+        .shop-zone {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            animation: slideInRight 0.8s ease-out;
+        }
+
+        .shop-header {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .shop-items {
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-right: 5px;
+        }
+
+        /* Scrollbar styling */
+        .shop-items::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .shop-items::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        .shop-item {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+        }
+
+
+        .shop-item:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: var(--accent-color);
+            transform: translateX(5px);
+        }
+
+        .shop-item:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        .item-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-right: 1rem;
+            color: var(--accent-color);
+        }
+
+        .item-info {
+            flex-grow: 1;
+        }
+
+        .item-name {
+            font-weight: 700;
+            font-size: 1rem;
+            display: block;
+        }
+
+        .item-cost {
+            font-size: 0.85rem;
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .item-desc {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            display: block;
+            margin-top: 2px;
+        }
+
+        .item-count {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-dim);
+        }
+
+        /* Falling Numbers Animation */
+        .click-feedback {
+            position: absolute;
+            color: var(--accent-color);
+            font-weight: bold;
+            font-size: 1.5rem;
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+            z-index: 100;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-50px) scale(0.8);
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .restart-btn {
+            margin-top: 1rem;
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            padding: 0.8rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+
+        .restart-btn:hover {
+            background: #ff4444;
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.3s;
+            z-index: 1000;
+        }
+
+        .back-btn:hover {
+            color: var(--accent-color);
+        }
+
+        .reset-btn-top {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: var(--text-dim);
+            background: none;
+            border: 1px solid var(--text-dim);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+
+        .reset-btn-top:hover {
+            color: #ff4444;
+            border-color: #ff4444;
+            box-shadow: 0 0 10px rgba(255, 68, 68, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <a href="../../../index.html" class="back-btn">← Back to Portfolio</a>
+    <button class="reset-btn-top" onclick="restartGame()">↺ Reset Progress</button>
+    <div class="game-layout">
+        <!-- LEFT: CLICKER -->
+        <div class="click-zone">
+            <div class="score-container">
+                <div class="score-label">Total Crypto</div>
+                <div class="score-value">
+                    <span id="score">0</span> <span class="currency">₿</span>
+                </div>
+                <div class="gps-display" id="gps-display">0.0 ₿ / sec</div>
+            </div>
+
+            <!-- Bitcoin SVG Button -->
+            <button class="coin-btn" id="click-btn" onclick="handleClick(event)">
+                <div class="coin-visual">
+                    <img src="../assets/coin.png" alt="Bitcoin"
+                        style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.5));">
+                </div>
+            </button>
+        </div>
+
+        <!-- RIGHT: SHOP -->
+        <div class="shop-zone">
+            <div class="shop-header">
+                Marketplace
+            </div>
+            <div class="shop-items" id="shop-container">
+                <!-- Items injected by JS -->
+            </div>
+            <button class="restart-btn" onclick="restartGame()">RESTART GAME</button>
+        </div>
+    </div>
+
+    <script>
+        // --- GAME STATE ---
+        let state = {
+            score: 0,
+            gps: 0, // Gold Per Second
+            items: [
+                {
+                    id: 'gpu',
+                    name: 'GPU Miner',
+                    baseCost: 10,
+                    gps: 1,
+                    count: 0,
+                    icon: '🖥️',
+                    desc: 'Mines 1 coin/sec'
+                },
+                // Easy to add more items here later
+                {
+                    id: 'asic',
+                    name: 'ASIC Rig',
+                    baseCost: 100,
+                    gps: 8,
+                    count: 0,
+                    icon: '⚡',
+                    desc: 'Mines 8 coins/sec'
+                },
+                {
+                    id: 'farm',
+                    name: 'Mining Farm',
+                    baseCost: 500,
+                    gps: 50,
+                    count: 0,
+                    icon: '🏭',
+                    desc: 'Mines 50 coins/sec'
+                }
+            ]
+        };
+
+        // --- DOM ELEMENTS ---
+        const scoreEl = document.getElementById('score');
+        const gpsEl = document.getElementById('gps-display');
+        const shopContainer = document.getElementById('shop-container');
+        const clickBtn = document.getElementById('click-btn');
+
+        // --- CORE MECHANICS ---
+        function updateUI() {
+            // Update Score
+            scoreEl.textContent = Math.floor(state.score).toLocaleString();
+
+            // Update GPS
+            gpsEl.textContent = `${state.gps.toFixed(1)} ₿ / sec`;
+
+            // Update Shop Buttons
+            state.items.forEach(item => {
+                const btn = document.getElementById(`btn-${item.id}`);
+                if (btn) {
+                    const cost = calculateCost(item);
+                    // Update cost display if it changes (optional if scaling is active)
+                    btn.querySelector('.item-cost').textContent = `${cost.toLocaleString()} ₿`;
+
+                    // Enable/Disable based on funds
+                    btn.disabled = state.score < cost;
+                }
+            });
+        }
+
+        function calculateCost(item) {
+            // Simple exponential growth: Base * (1.15 ^ count)
+            return Math.floor(item.baseCost * Math.pow(1.15, item.count));
+        }
+
+        function handleClick(e) {
+            // Add Coin
+            addScore(1);
+
+            // Visual Particles
+            createParticle(e.clientX, e.clientY, "+1");
+
+            // Pulse Effect via JS class reset (or handled by CSS active state)
+        }
+
+        function addScore(amount) {
+            state.score += amount;
+            updateUI();
+        }
+
+        function buyItem(index) {
+            const item = state.items[index];
+            const cost = calculateCost(item);
+
+            if (state.score >= cost) {
+                state.score -= cost;
+                item.count++;
+                state.gps += item.gps;
+
+                // Update specific item UI count
+                document.getElementById(`count-${item.id}`).textContent = item.count;
+
+                updateUI();
+            }
+        }
+
+        function createParticle(x, y, text) {
+            const el = document.createElement('div');
+            el.className = 'click-feedback';
+            el.textContent = text;
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+
+            // Random slight offset for natural feel
+            const xOffset = (Math.random() - 0.5) * 40;
+            el.style.transform = `translate(${xOffset}px, 0)`;
+
+            document.body.appendChild(el);
+
+            setTimeout(() => {
+                el.remove();
+            }, 800);
+        }
+
+        // --- INIT SHOP ---
+        function renderShop() {
+            shopContainer.innerHTML = '';
+            state.items.forEach((item, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'shop-item';
+                btn.id = `btn-${item.id}`;
+                btn.onclick = () => buyItem(index);
+
+                const currentCost = calculateCost(item);
+
+                btn.innerHTML = `
+                    <div class="item-icon">${item.icon}</div>
+                    <div class="item-info">
+                        <span class="item-name">${item.name}</span>
+                        <div class="item-desc">${item.desc}</div>
+                        <div class="item-cost">${currentCost} ₿</div>
+                    </div>
+                    <div class="item-count" id="count-${item.id}">${item.count}</div>
+                `;
+
+                shopContainer.appendChild(btn);
+            });
+        }
+
+        // --- SAVE SYSTEM ---
+        const SAVE_KEY = 'crypto_clicker_save';
+
+        function saveGame() {
+            const saveData = {
+                score: state.score,
+                items: state.items.map(i => ({ id: i.id, count: i.count }))
+            };
+            localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+
+            // Optional: Visual Feedback in console or small UI toast
+            console.log('Game Saved');
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem(SAVE_KEY);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    // Restore Score
+                    if (!isNaN(parsed.score)) state.score = parsed.score;
+
+                    // Restore Items
+                    if (Array.isArray(parsed.items)) {
+                        parsed.items.forEach(savedItem => {
+                            const item = state.items.find(i => i.id === savedItem.id);
+                            if (item) {
+                                item.count = savedItem.count || 0;
+                            }
+                        });
+                    }
+
+                    // Recalculate GPS
+                    recalcGPS();
+                } catch (e) {
+                    console.error('Save file corrupted:', e);
+                }
+            }
+        }
+
+        function recalcGPS() {
+            state.gps = state.items.reduce((total, item) => total + (item.count * item.gps), 0);
+        }
+
+        // --- GAME LOOP ---
+        setInterval(() => {
+            if (state.gps > 0) {
+                // Add 1/10th of second worth of GPS every 100ms for smoothness
+                addScore(state.gps / 10);
+            }
+        }, 100);
+
+        // Auto-Save every 30 seconds
+        setInterval(saveGame, 30000);
+
+        // Save on exit
+        window.addEventListener('beforeunload', saveGame);
+
+        // Initial Setup
+        loadGame();
+        renderShop();
+        updateUI();
+
+        // --- RESET LOGIC ---
+        function restartGame() {
+            if (confirm("Are you sure you want to RESET your progress? This cannot be undone.")) {
+                // Clear State
+                state.score = 0;
+                state.gps = 0;
+                state.items.forEach(item => item.count = 0);
+
+                // Clear Save
+                localStorage.removeItem(SAVE_KEY);
+
+                // Refresh UI
+                renderShop();
+                updateUI();
+
+                // Feedback
+                createParticle(window.innerWidth / 2, window.innerHeight / 2, "RESET!");
+            }
+        }
+
+
+    </script>
+</body>
+
+</html>
