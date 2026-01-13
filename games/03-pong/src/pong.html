@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Pong</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        body {
+            background-color: #0d0d0d;
+            color: #ffffff;
+            font-family: 'Press Start 2P', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            touch-action: none;
+            /* Prevent scrolling on mobile */
+        }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
+            border: 4px solid #333;
+            border-radius: 4px;
+        }
+
+        canvas {
+            display: block;
+            background-color: #000;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #888;
+            text-decoration: none;
+            font-size: 12px;
+            border: 1px solid #444;
+            padding: 10px 15px;
+            border-radius: 4px;
+            transition: all 0.3s;
+            z-index: 100;
+            text-transform: uppercase;
+        }
+
+        .back-btn:hover {
+            color: #00ff88;
+            border-color: #00ff88;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+        }
+
+        /* Overlay for "Touch to Start" on mobile */
+        #start-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .blink {
+            animation: blinker 1.5s linear infinite;
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+        }
+
+        @keyframes blinker {
+            50% {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <a href="../../../index.html" class="back-btn">← Back</a>
+
+    <div id="game-container">
+        <canvas id="pongCanvas" width="800" height="600"></canvas>
+        <div id="start-overlay">
+            <h1 class="blink">NEON PONG</h1>
+            <p>CLICK or TOUCH to START</p>
+            <p style="font-size: 10px; margin-top: 20px; color: #888;">Mouse/Touch = Move Paddle</p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('pongCanvas');
+        const ctx = canvas.getContext('2d');
+        const startOverlay = document.getElementById('start-overlay');
+
+        // --- Game Cfg ---
+        const PADDLE_WIDTH = 15;
+        const PADDLE_HEIGHT = 100;
+        const BALL_SIZE = 12;
+        const WINNING_SCORE = 11;
+
+        // --- Colors ---
+        const COLOR_MAIN = '#00ff88'; // Neon Green
+        const COLOR_AI = '#ff0055';   // Neon Red
+        const COLOR_BALL = '#ffffff';
+
+        // --- State ---
+        let gameRunning = false;
+        let lastTime = 0;
+
+        const player = {
+            x: 20,
+            y: canvas.height / 2 - PADDLE_HEIGHT / 2,
+            width: PADDLE_WIDTH,
+            height: PADDLE_HEIGHT,
+            color: COLOR_MAIN,
+            score: 0
+        };
+
+        const ai = {
+            x: canvas.width - 20 - PADDLE_WIDTH,
+            y: canvas.height / 2 - PADDLE_HEIGHT / 2,
+            width: PADDLE_WIDTH,
+            height: PADDLE_HEIGHT,
+            color: COLOR_AI,
+            score: 0,
+            speed: 4
+        };
+
+        const ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: BALL_SIZE / 2,
+            speed: 7,
+            velocityX: 5,
+            velocityY: 5,
+            color: COLOR_BALL
+        };
+
+        // --- Input Handling ---
+        function movePaddle(clientY) {
+            // Get canvas structure to normalize mouse position
+            const rect = canvas.getBoundingClientRect();
+            const rootY = clientY - rect.top;
+
+            // Center paddle on mouse
+            player.y = rootY - PADDLE_HEIGHT / 2;
+
+            // Bounds check
+            if (player.y < 0) player.y = 0;
+            if (player.y + PADDLE_HEIGHT > canvas.height) player.y = canvas.height - PADDLE_HEIGHT;
+        }
+
+        canvas.addEventListener('mousemove', e => {
+            if (gameRunning) movePaddle(e.clientY);
+        });
+
+        canvas.addEventListener('touchmove', e => {
+            if (gameRunning) {
+                e.preventDefault(); // Stop scrolling
+                movePaddle(e.touches[0].clientY);
+            }
+        }, { passive: false });
+
+        startOverlay.addEventListener('click', startGame);
+        startOverlay.addEventListener('touchstart', startGame);
+
+        function startGame() {
+            if (!gameRunning) {
+                gameRunning = true;
+                startOverlay.style.display = 'none';
+                resetBall();
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.speed = 7;
+            // Random start direction
+            ball.velocityX = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
+            ball.velocityY = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
+        }
+
+        function update() {
+            // 1. Move Ball
+            ball.x += ball.velocityX;
+            ball.y += ball.velocityY;
+
+            // 2. Wall Collision (Top/Bottom)
+            if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
+                ball.velocityY = -ball.velocityY;
+            }
+
+            // 3. AI Movement (Nerfed)
+            // AI only moves when ball comes towards it (velocityX > 0)
+            if (ball.velocityX > 0) {
+                const aiCenter = ai.y + ai.height / 2;
+                // Add some "reaction time" delay or error based on ball speed
+                if (aiCenter < ball.y - 35) {
+                    ai.y += ai.speed;
+                } else if (aiCenter > ball.y + 35) {
+                    ai.y -= ai.speed;
+                }
+            }
+
+            // AI Bounds
+            if (ai.y < 0) ai.y = 0;
+            if (ai.y + ai.height > canvas.height) ai.y = canvas.height - ai.height;
+
+            // 4. Paddle Collision
+            let activePaddle = (ball.x < canvas.width / 2) ? player : ai;
+
+            if (collision(ball, activePaddle)) {
+                // Determine hit point for angle change
+                let collidePoint = ball.y - (activePaddle.y + activePaddle.height / 2);
+                collidePoint = collidePoint / (activePaddle.height / 2); // -1 to 1
+
+                let angleRad = (Math.PI / 4) * collidePoint; // Max 45 degree angle
+
+                let direction = (ball.x < canvas.width / 2) ? 1 : -1;
+
+                ball.velocityX = direction * ball.speed * Math.cos(angleRad);
+                ball.velocityY = ball.speed * Math.sin(angleRad);
+
+                // Speed up slightly
+                ball.speed += 0.2;
+            }
+
+            // 5. Scoring
+            if (ball.x - ball.radius < 0) {
+                ai.score++;
+                resetBall();
+            } else if (ball.x + ball.radius > canvas.width) {
+                player.score++;
+                resetBall();
+            }
+        }
+
+        function collision(b, p) {
+            return b.x + b.radius > p.x &&
+                b.x - b.radius < p.x + p.width &&
+                b.y + b.radius > p.y &&
+                b.y - b.radius < p.y + p.height;
+        }
+
+        function draw() {
+            // Clear
+            ctx.fillStyle = '#111';
+            ctx.fillRect(0, 0, canvas.width, canvas.height); // BG
+
+            // Net
+            drawNet();
+
+            // Paddles
+            drawRect(player.x, player.y, player.width, player.height, player.color);
+            drawRect(ai.x, ai.y, ai.width, ai.height, ai.color);
+
+            // Ball
+            drawCircle(ball.x, ball.y, ball.radius, ball.color);
+
+            // Score
+            drawText(player.score, canvas.width / 4, 80);
+            drawText(ai.score, 3 * canvas.width / 4, 80);
+        }
+
+        function drawRect(x, y, w, h, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, w, h);
+            // Glow effect
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = color;
+            ctx.fillRect(x, y, w, h);
+            ctx.shadowBlur = 0; // Reset
+        }
+
+        function drawCircle(x, y, r, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2, false);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawText(text, x, y) {
+            ctx.fillStyle = '#FFF';
+            ctx.font = '50px "Press Start 2P"';
+            ctx.fillText(text, x, y);
+        }
+
+        function drawNet() {
+            for (let i = 0; i <= canvas.height; i += 30) {
+                drawRect(canvas.width / 2 - 1, i, 2, 15, '#333');
+            }
+        }
+
+        function gameLoop() {
+            if (gameRunning) {
+                update();
+                draw();
+                requestAnimationFrame(gameLoop);
+            }
+        }
+    </script>
+</body>
+
+</html>
