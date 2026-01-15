@@ -16,6 +16,9 @@ An addictive incremental game where you mine generic cryptocurrency, buy upgrade
 ### 3. [Rock Raper Scissors](/games/04-rock-paper-scissors) 
 A classic game of Rock Paper Scissors where you play against the computer.
 
+### 5. [Flappy Ghost](/games/05-flappy-ghost)
+A game of Flappy Bird where you play as a ghost.
+
 ## Project Structure
 - `/games`: Individual game projects (Source + Assets)
 - `index.html`: Main portfolio landing page

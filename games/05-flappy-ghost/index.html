@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spectral Flap | Procedural Ghost Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-green: #00ff88;
+            --ghost-white: #f0f8ff;
+            --bg-dark: #0a0a12;
+            --bg-deep: #050508;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at center, var(--bg-dark) 0%, var(--bg-deep) 100%);
+            color: var(--ghost-white);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 600px;
+            /* Constrain on large screens for better gameplay feel */
+            max-height: 800px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        /* Mobile Responsive Adjustments */
+        @media (max-width: 768px) {
+            #game-container {
+                max-width: 100%;
+                max-height: 100%;
+                border-radius: 0;
+            }
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            /* Critical for preventing default touch behaviors */
+        }
+
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.3s ease;
+        }
+
+        .ui-layer.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .ui-layer.active {
+            opacity: 1;
+            pointer-events: auto;
+            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .ui-layer.hidden .btn {
+            pointer-events: none;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            letter-spacing: -1px;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--ghost-white);
+            padding: 1rem 2.5rem;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
+        }
+
+        .btn:hover {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 25px rgba(0, 255, 136, 0.3);
+            transform: translateY(-2px);
+        }
+
+        #score-display {
+            position: absolute;
+            top: 10%;
+            width: 100%;
+            text-align: center;
+            font-size: 4rem;
+            font-weight: 700;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #bg-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="game-container">
+        <div id="score-display">0</div>
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="ui-layer active">
+            <h1>SPECTRAL FLAP</h1>
+            <p>Click or Space to Float</p>
+            <button class="btn" id="start-btn">Start Haunting</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="ui-layer hidden">
+            <h1>DISPERSED</h1>
+            <p id="final-score">Score: 0</p>
+            <p id="best-score">Best: 0</p>
+            <button class="btn" id="restart-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * SPECTRAL FLAP
+         * A procedural ghost flappy bird clone.
+         */
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score-display');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const bestScoreDisplay = document.getElementById('best-score');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+
+        // Game State
+        let frames = 0;
+        let score = 0;
+        let highScore = parseInt(localStorage.getItem('spectralFlapHighScore')) || 0;
+        let gameRunning = false;
+        let gameSpeed = 3;
+        const gravity = 0.25;
+
+        // Scaling
+        let scaleRatio = 1;
+
+        function resize() {
+            const container = document.getElementById('game-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            // Adjust scale based on a reference width, e.g., 400px
+            scaleRatio = canvas.width / 400;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        //Utilities        
+        function random(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        // --- AUDIO ---
+        const SoundManager = {
+            ctx: null,
+            init: function () {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                } else if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+            playOscillator: function (type, startFreq, endFreq, duration, vol = 0.1) {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(startFreq, this.ctx.currentTime);
+                if (endFreq) {
+                    osc.frequency.exponentialRampToValueAtTime(endFreq, this.ctx.currentTime + duration);
+                }
+
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+            playJump: function () {
+                // Short high pitch beep (sine)
+                this.playOscillator('sine', 400, 600, 0.1, 0.1);
+            },
+            playCrash: function () {
+                // Low pitch buzz (sawtooth)
+                this.playOscillator('sawtooth', 100, 50, 0.3, 0.2);
+            },
+            playScore: function () {
+                // Ding (sine, high freq)
+                this.playOscillator('sine', 1000, null, 0.1, 0.05);
+            }
+        };
+
+        // --- CLASSES ---
+
+        class Ghost {
+            constructor() {
+                this.width = 30; // base size
+                this.height = 30;
+                this.x = 50; // Logical X
+                // Initialize Logical Y. Center of screen in Logical units.
+                this.y = (canvas.height / scaleRatio) / 2;
+                this.velocity = 0; // Logical Velocity
+                this.jumpStrength = -5.5; // Logical Jump Strength
+                this.radius = 15;
+                this.tailOffset = 0;
+            }
+
+            draw() {
+                // Procedural Drawing
+                const r = this.radius * scaleRatio;
+                // Convert Logical coordinates to Screen Pixels for drawing
+                const x = this.x * scaleRatio;
+                const y = this.y * scaleRatio;
+
+                ctx.save();
+                ctx.translate(x, y);
+
+                // Add slight rotation based on velocity
+                const rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (this.velocity * 0.1)));
+                ctx.rotate(rotation);
+
+                // Glow
+                ctx.shadowBlur = 20 * scaleRatio;
+                ctx.shadowColor = "rgba(255, 255, 255, 0.6)";
+                ctx.fillStyle = "#f0f8ff";
+
+                // Draw Head (Semi-circle)
+                ctx.beginPath();
+                ctx.arc(0, 0, r, Math.PI, 0);
+
+                // Draw Body (downward)
+                // We want the bottom to be wavy
+                // Let's draw lines down to the bottom
+                // length of body
+                const bodyLength = r * 1.5;
+
+                // Right side down
+                ctx.lineTo(r, bodyLength);
+
+                // Wavy bottom
+                // We can use a sine wave to modulate the x points at the bottom
+                const waveCount = 3;
+                const waveHeight = 5 * scaleRatio;
+                const waveWidth = (r * 2) / waveCount;
+
+                this.tailOffset += 0.2; // animate the wave
+
+                for (let i = 0; i < waveCount; i++) {
+                    // Curves for the bottom "tentacles"
+                    // control point 1, control point 2, end point
+                    // This is a simple approximation of the classic ghost wave
+                    let startX = r - (i * waveWidth);
+                    let endX = r - ((i + 1) * waveWidth);
+
+                    // Make the wave "move" by offsetting y with sin
+                    let midX = (startX + endX) / 2;
+                    let waveY = bodyLength + Math.sin(frames * 0.2 + i) * (3 * scaleRatio);
+
+                    ctx.quadraticCurveTo(midX, waveY, endX, bodyLength);
+                }
+
+                // Left side up
+                ctx.lineTo(-r, 0);
+                ctx.fill();
+                ctx.closePath();
+
+                // Eyes
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = "#0a0a12";
+
+                // Blink logic
+                let eyeHeight = 4 * scaleRatio;
+                if (Math.random() < 0.01) eyeHeight = 0.5; // Blink occasionally
+
+                ctx.beginPath();
+                ctx.ellipse(r * 0.3, -r * 0.1, 3 * scaleRatio, eyeHeight, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Provide a little depth with the other eye just barely visible or distinct
+                ctx.beginPath();
+                ctx.ellipse(r * 0.7, -r * 0.1, 3 * scaleRatio, eyeHeight, 0, 0, Math.PI * 2); // shifted to look "forward"
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            update() {
+                // Physics in Logical Units
+                this.velocity += gravity;
+                this.y += this.velocity;
+
+                // Floor collision (Convert Logical Y to Pixels for comparison)
+                if (this.y * scaleRatio + this.radius * scaleRatio > canvas.height) {
+                    gameOver();
+                }
+
+                // Ceiling collision
+                if (this.y < 0) {
+                    this.y = 0;
+                    this.velocity = 0;
+                }
+            }
+
+            flap() {
+                // Logical Jump
+                this.velocity = this.jumpStrength;
+            }
+        }
+
+        class Pipe {
+            constructor() {
+                this.spacing = 150 * scaleRatio; // Gap size
+                this.topLength = random(canvas.height / 6, canvas.height - this.spacing - canvas.height / 6);
+                this.bottomLength = canvas.height - this.spacing - this.topLength;
+                this.x = canvas.width;
+                this.width = 60 * scaleRatio;
+                this.passed = false;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.fillStyle = "rgba(0, 0, 0, 0.6)"; // semi-transparent interior
+                ctx.strokeStyle = "#00ff88"; // Neon green
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = "#00ff88";
+
+                // Top Pipe
+                ctx.fillRect(this.x, 0, this.width, this.topLength);
+                ctx.strokeRect(this.x, 0, this.width, this.topLength);
+
+                // Bottom Pipe
+                const bottomY = canvas.height - this.bottomLength;
+                ctx.fillRect(this.x, bottomY, this.width, this.bottomLength);
+                ctx.strokeRect(this.x, bottomY, this.width, this.bottomLength);
+
+                // Add detail: inner glow or line to make it look "techy"
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width / 2, 0);
+                ctx.lineTo(this.x + this.width / 2, this.topLength);
+
+                ctx.moveTo(this.x + this.width / 2, bottomY);
+                ctx.lineTo(this.x + this.width / 2, canvas.height);
+                ctx.strokeStyle = "rgba(0, 255, 136, 0.3)";
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                ctx.restore();
+            }
+
+            update() {
+                this.x -= gameSpeed * scaleRatio;
+
+                // Collision Detection
+                // Check X bounds
+                let ghostLeft = ghost.x * scaleRatio - (ghost.radius * scaleRatio);
+                let ghostRight = ghost.x * scaleRatio + (ghost.radius * scaleRatio);
+
+                // Simple AABB collision is tricky with rotation, but circle-rect is decent
+                // For simplicity in a jam/demo style: treat ghost as a small rect in the center
+                const hitBoxMargin = 5 * scaleRatio;
+                const gX = (ghost.x * scaleRatio) - (ghost.radius * scaleRatio) + hitBoxMargin;
+                const gY = (ghost.y * scaleRatio) - (ghost.radius * scaleRatio) + hitBoxMargin;
+                const gW = (ghost.radius * 2 * scaleRatio) - (hitBoxMargin * 2);
+                const gH = (ghost.radius * 2 * scaleRatio) - (hitBoxMargin * 2);
+
+                if (
+                    gX < this.x + this.width &&
+                    gX + gW > this.x
+                ) {
+                    // Inside horizontal pipe area
+                    if (
+                        gY < this.topLength ||
+                        gY + gH > canvas.height - this.bottomLength
+                    ) {
+                        gameOver();
+                        return; // Stop update if died
+                    }
+                }
+
+                if (!gameRunning) return; // Stop if game ended by another pipe or event
+
+                // Score update
+                if (!this.passed && this.x + this.width < ghost.x * scaleRatio) {
+                    score++;
+                    SoundManager.playScore(); // Play score sound
+                    scoreDisplay.innerText = score;
+                    this.passed = true;
+                    // Speed up slightly
+                    if (score % 5 === 0) gameSpeed += 0.2;
+                }
+            }
+        }
+
+        // --- PARTICLES ---
+        const particles = [];
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = random(2, 5) * scaleRatio;
+                this.speedX = random(-1, 0.5); // drift left mostly
+                this.speedY = random(-1, 1);
+                this.alpha = 1;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.alpha -= 0.02;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = "#fff";
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // --- GLOBAL VARIABLES ---
+        let ghost;
+        let pipes = [];
+        let animationId;
+
+        // --- CORE FUNCTIONS ---
+
+        function init() {
+            ghost = new Ghost();
+            pipes = [];
+            score = 0;
+            frames = 0;
+            gameSpeed = 3;
+            scoreDisplay.innerText = score;
+        }
+
+        function animate() {
+            if (!gameRunning) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Handle Pipes
+            if (frames % 120 === 0) { // New pipe every ~2 seconds (at 60fps)
+                pipes.push(new Pipe());
+            }
+
+            // Remove off-screen pipes
+            if (pipes.length > 0 && pipes[0].x + pipes[0].width < 0) {
+                pipes.shift();
+            }
+
+            pipes.forEach(pipe => {
+                pipe.update();
+                pipe.draw();
+            });
+
+            // Particles
+            // Emit trail
+            if (frames % 5 === 0) {
+                particles.push(new Particle(ghost.x * scaleRatio, ghost.y * scaleRatio));
+            }
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].alpha <= 0) particles.splice(i, 1);
+            }
+
+            // Handle Ghost
+            ghost.update();
+            ghost.draw();
+
+            frames++;
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function startGame() {
+            SoundManager.init(); // Initialize audio on user interaction
+            init();
+            gameRunning = true;
+            startScreen.classList.remove('active');
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.remove('active');
+            gameOverScreen.classList.add('hidden');
+            animate();
+        }
+
+        function gameOver() {
+            SoundManager.playCrash(); // Play crash sound
+            gameRunning = false;
+            cancelAnimationFrame(animationId);
+
+            // Update High Score
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('spectralFlapHighScore', highScore);
+            }
+
+            finalScoreDisplay.innerText = `Score: ${score}`;
+            bestScoreDisplay.innerText = `Best: ${highScore}`;
+            scoreDisplay.innerText = ''; // Hide main score during game over
+            gameOverScreen.classList.remove('hidden');
+            gameOverScreen.classList.add('active');
+        }
+
+        // --- CONTROLS ---
+
+        function jump() {
+            if (gameRunning) {
+                SoundManager.playJump(); // Play jump sound
+                ghost.flap();
+                // Burst particles
+                for (let i = 0; i < 5; i++) {
+                    particles.push(new Particle(ghost.x * scaleRatio, ghost.y * scaleRatio));
+                }
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                if (!gameRunning && startScreen.classList.contains('active')) {
+                    startGame();
+                } else if (!gameRunning && gameOverScreen.classList.contains('active')) {
+                    startGame();
+                } else {
+                    jump();
+                }
+            }
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            jump();
+        });
+
+        // Touch support for mobile
+        // Touch support for mobile - Bind to window to catch touches everywhere
+        window.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // prevent scrolling
+
+            // Logic to handle start/restart on touch as well
+            if (!gameRunning && startScreen.classList.contains('active')) {
+                startGame();
+            } else if (!gameRunning && gameOverScreen.classList.contains('active')) {
+                startGame();
+            } else {
+                jump();
+            }
+        }, { passive: false });
+
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+
+        // Initial paint
+        resize();
+
+    </script>
+</body>
+
+</html>
