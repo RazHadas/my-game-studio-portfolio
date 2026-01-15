@@ -19,6 +19,9 @@ A classic game of Rock Paper Scissors where you play against the computer.
 ### 5. [Flappy Ghost](/games/05-flappy-ghost)
 A game of Flappy Bird where you play as a ghost.
 
+### 6. [Pixel Paint War](/games/06-pixel-paint-war)
+A fast-paced real-time multiplayer board game where players compete to paint a 4x4 grid using Socket.io.
+
 ## Project Structure
 - `/games`: Individual game projects (Source + Assets)
 - `index.html`: Main portfolio landing page
