@@ -3,11 +3,13 @@
 Battle against the computer in this classic game of wits. First to 3 wins takes the trophy!
 
 ## Structure
+
 - `index.html`: Main game structure
 - `style.css`: Premium aesthetics and dark mode support
 - `script.js`: Game logic and leaderboard management
 
 ## How to Play
+
 - Enter your username and click "Start Game" to begin.
 - Choose between Rock (✊), Paper (✋), or Scissors (✌️).
 - The computer will simultaneously make its choice.

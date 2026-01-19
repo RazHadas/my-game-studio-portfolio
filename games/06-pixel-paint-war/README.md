@@ -1,14 +1,17 @@
 # Pixel Paint War
 
-A fast-paced real-time multiplayer board game where players compete to paint a 4x4 grid. Capture as many tiles as possible in 15 seconds!
+A fast-paced real-time multiplayer board game where players compete to paint a 4x4 grid. Capture as many tiles as
+possible in 15 seconds!
 
 ## Structure (Under `src/`)
+
 - `server.js`: Node.js, Express, and Socket.io backend managing rooms and synchronization.
 - `public/index.html`: Main game structure and lobby interface.
 - `public/style.css`: Premium aesthetics and responsive grid design.
 - `public/script.js`: Client-side game logic and real-time Socket.io communication.
 
 ## How to Play
+
 - **Launch the game**: Run `npm start` and open `http://localhost:3000`.
 - **Create or Join**:
   - Click "Create New Game" to generate a unique 5-letter room code.

@@ -2,90 +2,90 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rock Paper Scissors | Educational Game</title>
-    <meta name="description"
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rock Paper Scissors | Educational Game</title>
+  <meta name="description"
         content="A professional Rock Paper Scissors game teaching DOM manipulation and event handling.">
-    <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <a href="../../../index.html"
-        style="position:fixed;top:10px;left:10px;z-index:9999;color:white;font-family:sans-serif;text-decoration:none;background:rgba(0,0,0,0.5);padding:5px 10px;border-radius:5px;">&larr;
-        Home</a>
-    <div class="container">
-        <!-- Landing Screen -->
-        <div id="landing-screen" class="screen">
-            <header>
-                <h1>Rock Paper Scissors Battle</h1>
-                <p>Enter your name to challenge the bot!</p>
-            </header>
-            <div class="input-group">
-                <input type="text" id="username-input" placeholder="Enter Username" autocomplete="off" maxlength="15">
-                <p id="error-message" class="error-text hidden">Please enter a valid name</p>
-            </div>
-            <button id="start-btn" class="btn-primary" style="display: block;">Start Game</button>
-        </div>
+<a href="../../../index.html"
+   style="position:fixed;top:10px;left:10px;z-index:9999;color:white;font-family:sans-serif;text-decoration:none;background:rgba(0,0,0,0.5);padding:5px 10px;border-radius:5px;">&larr;
+  Home</a>
+<div class="container">
+  <!-- Landing Screen -->
+  <div id="landing-screen" class="screen">
+    <header>
+      <h1>Rock Paper Scissors Battle</h1>
+      <p>Enter your name to challenge the bot!</p>
+    </header>
+    <div class="input-group">
+      <input type="text" id="username-input" placeholder="Enter Username" autocomplete="off" maxlength="15">
+      <p id="error-message" class="error-text hidden">Please enter a valid name</p>
+    </div>
+    <button id="start-btn" class="btn-primary" style="display: block;">Start Game</button>
+  </div>
 
-        <!-- Game Screen -->
-        <div id="game-screen" class="screen hidden">
-            <header>
-                <div class="header-top">
-                    <h1>Rock Paper Scissors Battle</h1>
-                    <button id="change-name-btn" class="btn-text">Edit Name</button>
-                </div>
-                <p>First to 3 wins takes the trophy!</p>
-            </header>
+  <!-- Game Screen -->
+  <div id="game-screen" class="screen hidden">
+    <header>
+      <div class="header-top">
+        <h1>Rock Paper Scissors Battle</h1>
+        <button id="change-name-btn" class="btn-text">Edit Name</button>
+      </div>
+      <p>First to 3 wins takes the trophy!</p>
+    </header>
 
-            <div class="scoreboard">
-                <div class="score-item">
-                    <span id="player-label" class="score-label">Player</span>
-                    <span id="player-score" class="score-value">0</span>
-                </div>
-                <div class="score-item">
-                    <span class="score-label">Computer</span>
-                    <span id="computer-score" class="score-value">0</span>
-                </div>
-            </div>
-
-            <div class="game-area">
-                <div class="choices">
-                    <button id="rock" class="choice-btn" aria-label="Rock">
-                        <span>✊</span>
-                        <span class="choice-label">Rock</span>
-                    </button>
-                    <button id="paper" class="choice-btn" aria-label="Paper">
-                        <span>✋</span>
-                        <span class="choice-label">Paper</span>
-                    </button>
-                    <button id="scissors" class="choice-btn" aria-label="Scissors">
-                        <span>✌️</span>
-                        <span class="choice-label">Scissors</span>
-                    </button>
-                </div>
-
-                <div class="message-area">
-                    <div id="result-text">Choose your weapon!</div>
-                    <div id="round-info">The game is waiting for your move.</div>
-                </div>
-            </div>
-
-            <div class="reset-container">
-                <button id="reset-btn" class="btn-primary">Play Again</button>
-            </div>
-        </div>
-
-        <!-- Leaderboard section -->
-        <div class="leaderboard-section">
-            <h2>Leaderboard</h2>
-            <div id="leaderboard-container">
-                <p class="empty-list">No games played yet.</p>
-            </div>
-        </div>
+    <div class="scoreboard">
+      <div class="score-item">
+        <span id="player-label" class="score-label">Player</span>
+        <span id="player-score" class="score-value">0</span>
+      </div>
+      <div class="score-item">
+        <span class="score-label">Computer</span>
+        <span id="computer-score" class="score-value">0</span>
+      </div>
     </div>
 
-    <script src="script.js"></script>
+    <div class="game-area">
+      <div class="choices">
+        <button id="rock" class="choice-btn" aria-label="Rock">
+          <span>✊</span>
+          <span class="choice-label">Rock</span>
+        </button>
+        <button id="paper" class="choice-btn" aria-label="Paper">
+          <span>✋</span>
+          <span class="choice-label">Paper</span>
+        </button>
+        <button id="scissors" class="choice-btn" aria-label="Scissors">
+          <span>✌️</span>
+          <span class="choice-label">Scissors</span>
+        </button>
+      </div>
+
+      <div class="message-area">
+        <div id="result-text">Choose your weapon!</div>
+        <div id="round-info">The game is waiting for your move.</div>
+      </div>
+    </div>
+
+    <div class="reset-container">
+      <button id="reset-btn" class="btn-primary">Play Again</button>
+    </div>
+  </div>
+
+  <!-- Leaderboard section -->
+  <div class="leaderboard-section">
+    <h2>Leaderboard</h2>
+    <div id="leaderboard-container">
+      <p class="empty-list">No games played yet.</p>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
 </body>
 
 </html>

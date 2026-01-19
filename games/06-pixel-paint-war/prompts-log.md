@@ -33,6 +33,7 @@ Here are the specific game rules and requirements:
 
 Please provide the full code for all files.
 ```
+
 # Prompt 2
 
 ```
