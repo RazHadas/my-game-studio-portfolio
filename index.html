@@ -21,6 +21,8 @@
     <div class="subtitle">Creating Virtual Worlds</div>
   </header>
 
+  <button id="install-pwa" style="margin: 0 auto;">Install App</button>
+
   <section class="about-section">
     <h2>About Me</h2>
     <p>
@@ -40,7 +42,8 @@
           <div class="card-icon">🐍</div>
           <div class="game-title">Neon Snake</div>
           <div class="game-desc">A modern retro twist on the classic snake game. Collect food and grow without
-            hitting the walls!</div>
+            hitting the walls!
+          </div>
           <div class="play-btn">Play Now</div>
         </div>
       </a>
@@ -51,7 +54,8 @@
           <div class="card-icon">💰</div>
           <div class="game-title">Crypto Clicker</div>
           <div class="game-desc">Mine crypto, buy upgrades, and become a tycoon in this addictive clicker idle
-            game.</div>
+            game.
+          </div>
           <div class="play-btn">Play Now</div>
         </div>
       </a>
@@ -62,7 +66,8 @@
           <div class="card-icon">🏓</div>
           <div class="game-title">Neon Pong</div>
           <div class="game-desc">Classic arcade action. Test your reflexes against the AI in this neon-styled
-            duel.</div>
+            duel.
+          </div>
           <div class="play-btn">Play Now</div>
         </div>
       </a>
@@ -73,7 +78,8 @@
           <div class="card-icon">✂️</div>
           <div class="game-title">Rock Paper Scissors Battle</div>
           <div class="game-desc">Challenge the bot in this classic game of strategy and luck. Win 3 rounds to
-            claim victory!</div>
+            claim victory!
+          </div>
           <div class="play-btn">Play Now</div>
         </div>
       </a>
@@ -84,7 +90,8 @@
           <div class="card-icon">👻</div>
           <div class="game-title">Flappy Ghost</div>
           <div class="game-desc">Guide your ghost through the neon obstacles. Procedurally generated levels
-            and high score tracking!</div>
+            and high score tracking!
+          </div>
           <div class="play-btn">Play Now</div>
         </div>
       </a>
@@ -108,17 +115,40 @@
 </body>
 
 
-
-<script>
+<script type="module">
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", async () => {
-      try {
-        const registration = await navigator.serviceWorker.register("./sw.js");
-        console.log("ServiceWorker registration successful with scope: ", registration.scope);
-      } catch (error) {
-        console.log("ServiceWorker registration failed: ", error);
-      }
-    });
+    try {
+      let deferredPrompt;
+      const installBtn = document.querySelector("#install-pwa");
+
+      addEventListener("beforeinstallprompt", e => {
+        console.log("beforeinstallprompt fired");
+        // Prevent the mini-infobar from taking over the screen
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        // Update UI notify the user they can install the PWA
+        installBtn.style.display = "block";
+      });
+
+      installBtn.addEventListener("click", async () => {
+        // Show the install prompt
+        deferredPrompt.prompt();
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        // We've used the prompt, and can't use it again, throw it away
+        deferredPrompt = null;
+        // Hide the button again
+        installBtn.style.display = "none";
+      });
+
+      const registration = await navigator.serviceWorker.register("./sw.js");
+      console.log("ServiceWorker registration successful with scope: ", registration.scope);
+    } catch (error) {
+      console.error("ServiceWorker registration failed:", error);
+    }
+
   }
 </script>
 

@@ -1,10 +1,14 @@
-const CACHE_NAME = "game-studio-v1";
+const CACHE_NAME = "game-studio-v4";
 const ASSETS_TO_CACHE = [
     "./",
     "./index.html",
     "./styles.css",
     "./manifest.json",
     "./icons/icon.svg",
+    "./icons/icon-192.png",
+    "./icons/icon-512.png",
+    "./screenshots/mobile.png",
+    "./screenshots/desktop.png"
 ];
 
 // Install event: cache core assets
