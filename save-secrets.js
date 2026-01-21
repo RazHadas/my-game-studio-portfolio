@@ -16,7 +16,6 @@ const envMapping = {
     'STORAGE_BUCKET': 'FIREBASE_STORAGE_BUCKET',
     'MESSAGING_SENDER_ID': 'FIREBASE_MESSAGING_SENDER_ID',
     'APP_ID': 'FIREBASE_APP_ID',
-    'DATABASE_URL': 'FIREBASE_DATABASE_URL'
 };
 
 const secrets = Object.values(envMapping);
