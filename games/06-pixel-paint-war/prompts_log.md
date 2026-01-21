@@ -57,3 +57,51 @@ move the game files under src, then create README that follows 04-rock-paper-sci
 ```
 update README.md with the new game
 ```
+
+# Prompt 6
+
+```
+This product is on GitHub. The goal is to deploy it in a convenient way such that the static web pages (game pages) can be served correctly and the multiplayer game (06-pixel-paint-war) can function as a 2-player multiplayer game.
+Search online and assist free services that can be used to host this website while fulfilling the multiplayer game requriement, e.g. Github Pages, Firebase Hosting and so on
+```
+
+# Prompt 7
+
+```
+Look for a CLI based solution that can be taught to children as well
+```
+
+# Prompt 8
+
+```
+Firebase CLI seems like the way to go. But how will you store the Firebase creds?
+```
+
+# Prompt 9
+
+```
+proceed with the CLI approach with storing secrets say on GitHub as it's versatile. As for socketio, Find a way to implement the game such that it's compatible with Firebase, e.g. Firebase Functions and/or Cloud Firestore
+```
+
+# Prompt 11
+
+```
+save the secrets on github
+```
+
+# Outcome
+
+The game was successfully transitioned from a Node.js/Socket.io architecture to a **Firebase Realtime Database** (Serverless) architecture.
+
+### Key Deliverables:
+1.  **Firebase Integration**: `script.js` was refactored to use the Firebase SDK for real-time synchronization.
+2.  **Secret Management**: 
+    - Created `save_secrets.ps1` to allow CLI-based secret storage via `gh secret set`.
+    - Implemented `firebase-config.js` with placeholders for secure injection.
+3.  **CI/CD Pipeline**: Added `.github/workflows/deploy-pixel-paint-war.yml` to automate deployment and secret injection upon pushing to the `main` branch.
+4.  **Standards Compliance**:
+    - Moved code to `/src` and created `/assets`.
+    - Added **Touch Event** support for mobile devices.
+    - Documented all steps in `README.md` and `prompts_log.md`.
+
+

@@ -1,0 +1,34 @@
+name: Deploy Pixel Paint War to Firebase
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'games/06-pixel-paint-war/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Inject Firebase Secrets
+        run: |
+          CONFIG_FILE="games/06-pixel-paint-war/src/firebase-config.js"
+          sed -i "s/YOUR_API_KEY/${{ secrets.FIREBASE_API_KEY }}/g" $CONFIG_FILE
+          sed -i "s/YOUR_PROJECT_ID.firebaseapp.com/${{ secrets.FIREBASE_AUTH_DOMAIN }}/g" $CONFIG_FILE
+          sed -i "s|https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com|${{ secrets.FIREBASE_DATABASE_URL }}|g" $CONFIG_FILE
+          sed -i "s/YOUR_PROJECT_ID/${{ secrets.FIREBASE_PROJECT_ID }}/g" $CONFIG_FILE
+          sed -i "s/YOUR_PROJECT_ID.appspot.com/${{ secrets.FIREBASE_STORAGE_BUCKET }}/g" $CONFIG_FILE
+          sed -i "s/YOUR_SENDER_ID/${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}/g" $CONFIG_FILE
+          sed -i "s/YOUR_APP_ID/${{ secrets.FIREBASE_APP_ID }}/g" $CONFIG_FILE
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
+          projectId: "${{ secrets.FIREBASE_PROJECT_ID }}"
+          channelId: live
+          entryPoint: games/06-pixel-paint-war
