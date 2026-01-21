@@ -96,7 +96,7 @@ The game was successfully transitioned from a Node.js/Socket.io architecture to 
 ### Key Deliverables:
 1.  **Firebase Integration**: `script.js` was refactored to use the Firebase SDK for real-time synchronization.
 2.  **Secret Management**: 
-    - Created `save_secrets.ps1` to allow CLI-based secret storage via `gh secret set`.
+    - Created `save-secrets.js` to allow CLI-based secret storage via `gh secret set`.
     - Implemented `firebase-config.js` with placeholders for secure injection.
 3.  **CI/CD Pipeline**: Added `.github/workflows/deploy-pixel-paint-war.yml` to automate deployment and secret injection upon pushing to the `main` branch.
 4.  **Standards Compliance**:
