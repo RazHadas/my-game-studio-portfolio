@@ -139,6 +139,7 @@
 
       installBtn.addEventListener("click", async () => {
         if (!deferredPrompt) {
+          alert("Installation is not currently available. Please use the 'Add to Home Screen' option in your browser menu.");
           console.log("Install prompt not ready");
           return;
         }
