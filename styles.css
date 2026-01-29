@@ -56,7 +56,6 @@ h1.neon-title {
     0 0 40px var(--neon-purple),
     0 0 80px var(--neon-purple);
   margin: 0;
-  animation: flicker 3s infinite alternate;
   line-height: 1.1;
 }
 
